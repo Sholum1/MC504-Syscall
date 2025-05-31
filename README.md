@@ -37,31 +37,35 @@ qemu-system-x86_64 \
 shared_folder /root/host_folder 9p trans=virtio 0 0
 ```
 
-8. Rode o comando
+7. Rode o comando
 ```bash
 reboot
 ```
    
-9. Vá para o diretório `host_folders` com:
+8. Vá para o diretório `host_folders` com:
 ```bash
 cd host_folders
 ```
 
-10. Compile o arquivo `teste_syscall.c` com:
+9. Compile o arquivo `teste_syscall.c` com:
 ```bash
 gcc teste_syscall.c -o teste
 ```
 
-11. Por fim, rode:
+10. Por fim, rode:
 ```bash
 ./teste
 ```
 
-O terminal mostrará:
+O terminal imediatamente mostrará:
 ```bash
 Dormindo por algum periodo de 1000 ate 5000 milissegundos
 ```
-E, após 5 segundos:
+E, após um período aleatório de 1000 a 5000 milissegundos aparecerá:
 ```bash
 Tudo certo! Processo dormiu por <random> milissegundos
 ```
+
+Onde <random> é o tempo que o sleep demorou.
+
+É possível editar esse intervalo de tempo no arquivo `teste_syscall.c`.
