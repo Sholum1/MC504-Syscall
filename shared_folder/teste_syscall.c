@@ -6,7 +6,7 @@
 int main() {
     
     long ret;
-    unsigned int seconds = 5;
+    unsigned int seconds = 5000;
 
     printf("Sleeping for %u seconds...\n", seconds);
     

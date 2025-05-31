@@ -1,1 +1,3 @@
 *.raw
+mnt_partition
+mnt_partition/*
