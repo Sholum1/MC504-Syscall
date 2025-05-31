@@ -59,9 +59,9 @@ gcc teste_syscall.c -o teste
 
 O terminal mostrará:
 ```bash
-Sleeping for 5 seconds...
+Dormindo por algum periodo de 1000 ate 5000 milissegundos
 ```
 E, após 5 segundos:
 ```bash
-Slept for 5 seconds
+Tudo certo! Processo dormiu por <random> milissegundos
 ```
