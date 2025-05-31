@@ -1,0 +1,92 @@
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index cfb5ca41e..912c7b777 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -391,6 +391,7 @@
+ 465	common	listxattrat		sys_listxattrat
+ 466	common	removexattrat		sys_removexattrat
+ 467	common	open_tree_attr		sys_open_tree_attr
++468     common  sleep_proc              sys_sleep_proc
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index e5603cc91..65054f928 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -988,6 +988,7 @@ asmlinkage long sys_lsm_get_self_attr(unsigned int attr, struct lsm_ctx __user *
+ asmlinkage long sys_lsm_set_self_attr(unsigned int attr, struct lsm_ctx __user *ctx,
+ 				      u32 size, u32 flags);
+ asmlinkage long sys_lsm_list_modules(u64 __user *ids, u32 __user *size, u32 flags);
++asmlinkage long sys_sleep_proc(unsigned int seconds);
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 2892a4502..2a38c200a 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -851,9 +851,11 @@ __SYSCALL(__NR_listxattrat, sys_listxattrat)
+ __SYSCALL(__NR_removexattrat, sys_removexattrat)
+ #define __NR_open_tree_attr 467
+ __SYSCALL(__NR_open_tree_attr, sys_open_tree_attr)
++#define __NR_sleep_proc 468
++__SYSCALL(__NR_sleep_proc, sys_sleep_proc)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 468
++#define __NR_syscalls 469
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 434929de1..f2c9fd5a7 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -57,6 +57,8 @@ obj-y += dma/
+ obj-y += entry/
+ obj-$(CONFIG_MODULES) += module/
+ 
++obj-y += sleep_proc.o
++
+ obj-$(CONFIG_KCMP) += kcmp.o
+ obj-$(CONFIG_FREEZER) += freezer.o
+ obj-$(CONFIG_PROFILING) += profile.o
+diff --git a/kernel/sleep_proc.c b/kernel/sleep_proc.c
+new file mode 100644
+index 000000000..04bb960b1
+--- /dev/null
++++ b/kernel/sleep_proc.c
+@@ -0,0 +1,20 @@
++#include <linux/syscalls.h>
++
++SYSCALL_DEFINE1(sleep_proc, unsigned int, seconds)
++{
++    ktime_t sleep_time;
++    unsigned long remaining_jiffies;
++
++    if (seconds == 0)
++        return 0;
++
++    sleep_time = ktime_set(seconds, 0);
++    remaining_jiffies = schedule_timeout_interruptible(
++        ktime_to_ms(sleep_time) / MSEC_PER_SEC * HZ
++    );
++
++    if (signal_pending(current))
++        return -ERESTARTSYS;
++
++    return 0;
++}
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index c00a86931..c003ad664 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -387,6 +387,7 @@ COND_SYSCALL(setresgid16);
+ COND_SYSCALL(setresuid16);
+ COND_SYSCALL(setreuid16);
+ COND_SYSCALL(setuid16);
++COND_SYSCALL(sleep_proc);
+ 
+ /* restartable sequence */
+ COND_SYSCALL(rseq);
