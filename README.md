@@ -1,7 +1,12 @@
 # Projeto 2 de MC504 (Sistemas Operacionais): implementação de uma syscall no kernel Linux seguindo o [tutorial do **Lkcamp**](https://docs.lkcamp.dev/intro_tutorials/boot/)
 
-## Objetivos das chamadas de sistema:
-A `sleep_proc` busca implementar uma syscall de sleep, a qual recebe um `unsigned int` que representa por quantos segundos uma thread irá dormir.
+## Objetivos da chamada de sistema:
+Implementamos uma syscall chamada `faisca_sleep`, que faz um sleep por um período aleatório entre um intervalo de milissegundos.
+Ela recebe dois inteiros sem sinal (representando o intervalo de tempo) e um ponteiro para inteiro sem sinal (no qual será gravado
+qual foi a quantidade de milissegundos escolhida). 
+
+É feito tratamente de erro na syscall, garantindo que o ponteiro não é nulo
+e que o começo do intervalo de tempo não é maior que o fim.
 
 ---
 ## Tutorial de uso:
