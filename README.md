@@ -1,8 +1,8 @@
 # Projeto 2 de MC504 (Sistemas Operacionais): implementação de uma syscall no kernel Linux seguindo o [tutorial do **Lkcamp**](https://docs.lkcamp.dev/intro_tutorials/boot/)
 
----
 ## Objetivos das chamadas de sistema:
 A `sleep_proc` busca implementar uma syscall de sleep, a qual recebe um `unsigned int` que representa por quantos segundos uma thread irá dormir.
+
 ---
 ## Tutorial de uso:
 1. Clone o repositório e o submodule (kernel linux):
