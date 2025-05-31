@@ -32,17 +32,21 @@ qemu-system-x86_64 \
 
 5. Na VM, acesse o usuário `root` com a senha definida no [passo](https://docs.lkcamp.dev/intro_tutorials/boot/#121-inside-the-new-system).
 
-6. Vá para o diretório `host_folders` com:
+6. Adcione a seguinte linha em `/etc/fstab` usando `vi` ou `nano`: `shared_folder /root/host_folder 9p trans=virtio 0 0`
+
+7. Rode o comando `reboot`
+   
+8. Vá para o diretório `host_folders` com:
 ```bash
 cd host_folders
 ```
 
-7. Compile o arquivo `teste_syscall.c` com:
+8. Compile o arquivo `teste_syscall.c` com:
 ```bash
 gcc teste_syscall.c -o teste
 ```
 
-8. Por fim, rode:
+9. Por fim, rode:
 ```bash
 ./teste
 ```
