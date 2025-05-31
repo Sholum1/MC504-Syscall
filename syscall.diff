@@ -1,37 +1,37 @@
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index cfb5ca41e..912c7b777 100644
+index cfb5ca41e30d..397717367a07 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
 @@ -391,6 +391,7 @@
  465	common	listxattrat		sys_listxattrat
  466	common	removexattrat		sys_removexattrat
  467	common	open_tree_attr		sys_open_tree_attr
-+468     common  sleep_proc              sys_sleep_proc
++468     common  faisca_sleep              sys_faisca_sleep
  
  #
  # Due to a historical design error, certain syscalls are numbered differently
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e5603cc91..65054f928 100644
+index e5603cc91963..1dbe17501c0b 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
 @@ -988,6 +988,7 @@ asmlinkage long sys_lsm_get_self_attr(unsigned int attr, struct lsm_ctx __user *
  asmlinkage long sys_lsm_set_self_attr(unsigned int attr, struct lsm_ctx __user *ctx,
  				      u32 size, u32 flags);
  asmlinkage long sys_lsm_list_modules(u64 __user *ids, u32 __user *size, u32 flags);
-+asmlinkage long sys_sleep_proc(unsigned int seconds);
++asmlinkage long sys_faisca_sleep(unsigned int low_milli, unsigned int high_milli, unsigned* decided_time);
  
  /*
   * Architecture-specific system calls
 diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 2892a4502..2a38c200a 100644
+index 2892a45023af..8775825bc271 100644
 --- a/include/uapi/asm-generic/unistd.h
 +++ b/include/uapi/asm-generic/unistd.h
 @@ -851,9 +851,11 @@ __SYSCALL(__NR_listxattrat, sys_listxattrat)
  __SYSCALL(__NR_removexattrat, sys_removexattrat)
  #define __NR_open_tree_attr 467
  __SYSCALL(__NR_open_tree_attr, sys_open_tree_attr)
-+#define __NR_sleep_proc 468
-+__SYSCALL(__NR_sleep_proc, sys_sleep_proc)
++#define __NR_faisca_sleep 468
++__SYSCALL(__NR_faisca_sleep, sys_faisca_sleep)
  
  #undef __NR_syscalls
 -#define __NR_syscalls 468
@@ -40,53 +40,60 @@ index 2892a4502..2a38c200a 100644
  /*
   * 32 bit systems traditionally used different
 diff --git a/kernel/Makefile b/kernel/Makefile
-index 434929de1..f2c9fd5a7 100644
+index 434929de17ef..fc71aac91ef5 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
 @@ -57,6 +57,8 @@ obj-y += dma/
  obj-y += entry/
  obj-$(CONFIG_MODULES) += module/
  
-+obj-y += sleep_proc.o
++obj-y += faisca_sleep.o
 +
  obj-$(CONFIG_KCMP) += kcmp.o
  obj-$(CONFIG_FREEZER) += freezer.o
  obj-$(CONFIG_PROFILING) += profile.o
-diff --git a/kernel/sleep_proc.c b/kernel/sleep_proc.c
+diff --git a/kernel/faisca_sleep.c b/kernel/faisca_sleep.c
 new file mode 100644
-index 000000000..04bb960b1
+index 000000000000..add2ee77bd3b
 --- /dev/null
-+++ b/kernel/sleep_proc.c
-@@ -0,0 +1,20 @@
++++ b/kernel/faisca_sleep.c
+@@ -0,0 +1,27 @@
 +#include <linux/syscalls.h>
++#include <linux/random.h>
 +
-+SYSCALL_DEFINE1(sleep_proc, unsigned int, seconds)
++SYSCALL_DEFINE3(faisca_sleep, unsigned int, low_milli, unsigned int, high_milli, unsigned int*, decided_time)
 +{
-+    ktime_t sleep_time;
-+    unsigned long remaining_jiffies;
++    unsigned int remaining_jiffies;
++    unsigned int additional_time;
 +
-+    if (seconds == 0)
-+        return 0;
++    if(low_milli > high_milli){
++        return -EINVAL; // cant have maximum below minimum
++    }
 +
-+    sleep_time = ktime_set(seconds, 0);
++    if(decided_time == NULL){
++        return -EINVAL; // pointer must be non-NULL
++    }
++
++    get_random_bytes((u8*)&additional_time, 4);
++
++    additional_time %= high_milli-low_milli+1; // bounding additional time to not exceed high_milli
++    *decided_time = low_milli+additional_time;
++
 +    remaining_jiffies = schedule_timeout_interruptible(
-+        ktime_to_ms(sleep_time) / MSEC_PER_SEC * HZ
++        msecs_to_jiffies(*decided_time)+1 // +1 to avoid sending 0 jiffies
 +    );
-+
-+    if (signal_pending(current))
-+        return -ERESTARTSYS;
 +
 +    return 0;
 +}
 diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index c00a86931..c003ad664 100644
+index c00a86931f8c..3add9ba0a740 100644
 --- a/kernel/sys_ni.c
 +++ b/kernel/sys_ni.c
 @@ -387,6 +387,7 @@ COND_SYSCALL(setresgid16);
  COND_SYSCALL(setresuid16);
  COND_SYSCALL(setreuid16);
  COND_SYSCALL(setuid16);
-+COND_SYSCALL(sleep_proc);
++COND_SYSCALL(faisca_sleep);
  
  /* restartable sequence */
  COND_SYSCALL(rseq);
