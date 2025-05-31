@@ -1,25 +1,22 @@
 #include<stdio.h>
 #include<unistd.h>
 
-#define sys_sleep_proc 468
+#define sys_faisca_sleep 468
 
 int main() {
     
-    long ret;
-    unsigned int seconds = 5000;
+    unsigned int low = 1000, high = 5000;
+    unsigned int decided;    
+    printf("Dormindo por algum periodo de %u ate %u milissegundos\n", low, high);
 
-    printf("Sleeping for %u seconds...\n", seconds);
+    int ret = syscall(sys_faisca_sleep, low, high, &decided);
     
-    // Call the syscall to sleep for a specified number of seconds
-    ret = syscall(sys_sleep_proc, seconds);
-
-    // Check if the syscall was successful
     if (ret == -1) {
         perror("syscall failed");
         return 1;
     }
 
-    printf("Slept for %u seconds\n", seconds);
+    printf("Tudo certo! Processo dormiu por %u milissegundos\n", decided);
     return 0;
 
     
