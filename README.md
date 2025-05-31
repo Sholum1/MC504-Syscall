@@ -2,7 +2,7 @@
 
 ---
 ## Objetivos das chamadas de sistema:
-
+A `sleep_proc` busca implantar uma syscall de sleep, a qual recebe um `unsigned int` que representar por quantos segundos uma thread irá dormir.
 ---
 ## Tutorial de uso:
 Primeiramente, clone o repositório e o submodule (kernel linux):
